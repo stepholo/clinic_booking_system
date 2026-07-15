@@ -1,0 +1,17 @@
+
+
+# Django stuff:
+*.log
+*.pot
+*.py[cod]
+*.sqlite3
+*.db
+
+# Environment variables
+.env
+
+# Django migrations
+*/migrations/*
+
+# If your project uses a virtual environment, you may want to ignore it as well
+.venv/
