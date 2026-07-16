@@ -84,12 +84,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 ROOT_URLCONF = 'clinic_platform.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -237,7 +239,21 @@ SIMPLE_JWT = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'CareConnect API',
-    'DESCRIPTION': 'CareConnect clinic booking API for user account and scheduling services.',
+    'DESCRIPTION': (
+        'CareConnect clinic booking API for user account and scheduling services.\n\n'
+        '## Quick Start\n'
+        '1. Open `/api/docs/` to explore endpoints interactively.\n'
+        '2. Register or sign in using the user auth endpoints.\n'
+        '3. Obtain JWT access and refresh tokens from the auth login endpoint.\n'
+        '4. Click **Authorize** in Swagger and enter: `Bearer <access_token>`.\n'
+        '5. Call protected endpoints under users, doctors, patients, schedules, and appointments.\n\n'
+        '## Useful URLs\n'
+        '- API Index: `/`\n'
+        '- Swagger UI: `/api/docs/`\n'
+        '- OpenAPI Schema: `/api/schema/`\n'
+        '- ReDoc: `/api/redoc/`\n'
+        '- Admin: `/admin/`\n'
+    ),
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     'SECURITY_SCHEMES': {
