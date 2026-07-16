@@ -16,6 +16,7 @@ import importlib.util
 from urllib.parse import parse_qs, unquote, urlparse
 from dotenv import load_dotenv
 from datetime import timedelta
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -113,6 +114,10 @@ def _resolved_db_config(prefix: str, fallback_url_env: str = 'DATABASE_URL', fal
 
     return merged
 
+
+def _has_db_connection_values(cfg: dict) -> bool:
+    return all(cfg.get(key) for key in ('NAME', 'USER', 'PASSWORD', 'HOST', 'PORT'))
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -202,16 +207,30 @@ DATABASES = {
         },
     },
     'booking_db': {
-        **_resolved_db_config(
-            'BOOKING_DB',
-            fallback_url_env='BOOKING_DATABASE_URL',
-            fallback=_resolved_db_config('USER_DB', fallback_url_env='DATABASE_URL'),
-        ),
+        **_resolved_db_config('BOOKING_DB', fallback_url_env='BOOKING_DB_DATABASE_URL'),
         'TEST': {
             'DEPENDENCIES': ['user_db'],
         },
     },
 }
+
+if not _has_db_connection_values(DATABASES['booking_db']):
+    if DEBUG or getbool('ALLOW_BOOKING_DB_FALLBACK', False):
+        DATABASES['booking_db'] = {
+            **_resolved_db_config(
+                'BOOKING_DB',
+                fallback_url_env='BOOKING_DB_DATABASE_URL',
+                fallback=_resolved_db_config('USER_DB', fallback_url_env='DATABASE_URL'),
+            ),
+            'TEST': {
+                'DEPENDENCIES': ['user_db'],
+            },
+        }
+    else:
+        raise ImproperlyConfigured(
+            'BOOKING_DB settings are required to preserve the split database setup. '
+            'Set BOOKING_DB_DATABASE_URL or BOOKING_DB_NAME/USER/PASSWORD/HOST/PORT.'
+        )
 
 # In some CI setups both aliases intentionally point to the same physical DB.
 # Django test database ordering treats alias dependencies as circular in that case,
