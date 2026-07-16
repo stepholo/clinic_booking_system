@@ -82,7 +82,7 @@ jobs:
               exit 1
             fi
 
-            railway login --token "$RAILWAY_TOKEN"
+            export RAILWAY_TOKEN
             railway up \
               --project "$RAILWAY_APP_PROJECT_ID" \
               --service "$RAILWAY_APP_SERVICE_ID" \
