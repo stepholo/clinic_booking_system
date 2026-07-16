@@ -82,9 +82,11 @@ jobs:
               exit 1
             fi
 
+            RAILWAY_ENVIRONMENT_NAME="${RAILWAY_ENVIRONMENT_NAME:-production}"
             export RAILWAY_TOKEN
             railway up \
               --project "$RAILWAY_APP_PROJECT_ID" \
+              --environment "$RAILWAY_ENVIRONMENT_NAME" \
               --service "$RAILWAY_APP_SERVICE_ID" \
               --detach
 
