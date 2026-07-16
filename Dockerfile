@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir --upgrade pip \
 COPY clinic_platform /app/clinic_platform
 WORKDIR /app/clinic_platform
 
-CMD ["sh", "-c", "gunicorn clinic_platform.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && gunicorn clinic_platform.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
