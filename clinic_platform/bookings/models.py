@@ -71,24 +71,10 @@ class Appointment(models.Model):
         except Doctor.DoesNotExist:
             raise ValidationError({'doctor_id': 'Doctor profile not found.'})
 
-        from schedules.models import DoctorSchedule
-        DoctorSchedule.deactivate_expired()
-
         try:
             patient = User.objects.get(pk=patient_uuid)
         except User.DoesNotExist:
             raise ValidationError({'patient_id': 'Patient not found.'})
-
-        local_dt = timezone.localtime(self.scheduled_at)
-        schedule_date = local_dt.date()
-
-        schedules = DoctorSchedule.objects.filter(
-            doctor=doctor,
-            schedule_date=schedule_date,
-            is_active=True,
-        ).order_by('start_time')
-        if not schedules.exists():
-            raise ValidationError({'scheduled_at': 'Doctor is not available on the selected date.'})
 
         if self.scheduled_at <= timezone.now():
             raise ValidationError({'scheduled_at': 'Appointment must be in the future.'})
@@ -104,6 +90,20 @@ class Appointment(models.Model):
 
         if patient.role != 'patient':
             raise ValidationError({'patient_id': 'Selected user is not a patient.'})
+
+        from schedules.models import DoctorSchedule
+        DoctorSchedule.deactivate_expired()
+
+        local_dt = timezone.localtime(self.scheduled_at)
+        schedule_date = local_dt.date()
+
+        schedules = DoctorSchedule.objects.filter(
+            doctor=doctor,
+            schedule_date=schedule_date,
+            is_active=True,
+        ).order_by('start_time')
+        if not schedules.exists():
+            raise ValidationError({'scheduled_at': 'Doctor is not available on the selected date.'})
 
         slot_start = timezone.make_aware(timezone.datetime.combine(schedule_date, local_dt.time()))
         slot_end = slot_start + timezone.timedelta(minutes=30)
@@ -147,10 +147,31 @@ class Appointment(models.Model):
             **kwargs: Keyword save arguments, optionally including ``using``.
         """
         using = kwargs.pop('using', None) or self._state.db or router.db_for_write(self.__class__, instance=self)
+        previous_state = None
+        if self.pk:
+            previous_state = Appointment.objects.using(using).filter(pk=self.pk).values(
+                'doctor_id',
+                'scheduled_at',
+                'status',
+            ).first()
+
         if using:
             self._state.db = using
         self.full_clean()
         super().save(*args, using=using, **kwargs)
+
+        from .cache_utils import invalidate_slots
+
+        affected: set[tuple[UUID | str, date]] = set()
+        current_day = timezone.localtime(self.scheduled_at).date()
+        affected.add((self.doctor_id, current_day))
+
+        if previous_state is not None:
+            previous_day = timezone.localtime(previous_state['scheduled_at']).date()
+            affected.add((previous_state['doctor_id'], previous_day))
+
+        for doctor_id, day in affected:
+            invalidate_slots(doctor_id, day)
 
     @classmethod
     def get_available_slots(cls, doctor_id: UUID | str, date: date) -> list[str]:
@@ -209,5 +230,5 @@ class Appointment(models.Model):
                     slots.append(current.isoformat())
                 current += timezone.timedelta(minutes=30)
 
-            set_slots(doctor_id, date, slots, settings.CACHE_TTL_SECONDS)
+        set_slots(doctor_id, date, slots, settings.CACHE_TTL_SECONDS)
         return slots
