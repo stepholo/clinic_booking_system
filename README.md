@@ -137,7 +137,7 @@ pytest clinic_platform/tests -q
 
 Pytest configuration is in `clinic_platform/pytest.ini`.
 
-## CI/CD (Brief)
+## CI/CD - Brief Overview
 
 CI/CD is configured in `.circleci/config.yml` with two jobs:
 
@@ -180,7 +180,7 @@ The pipeline validates code quality and deployment safety by running automated t
 
 ## Deployment Notes (Railway)
 
-- Ensure the app service has database variables available (`DATABASE_URL` or equivalent PG/USER_DB/BOOKING_DB vars).
+- Ensure the app service has database variables available (`DATABASE_PUBLIC_URL` or equivalent PG/USER_DB/BOOKING_DB vars).
 - If `createsuperuser` fails with a local socket error, it usually means DB env vars are missing in the running service shell.
 - Run migrations on both database aliases after each schema-affecting deploy.
 
@@ -203,3 +203,47 @@ Clinic Booking System/
 		templates/
 		tests/
 ```
+
+## AI Reflection
+
+1. What did you use AI for across the four sections?
+    - System Design
+        - Get trade-offs between system designs that could be used
+        - Draw system design and data flow diagrams
+        - Understand the edge cases of the assignment scenerio
+
+    - API Implementations
+        - Code Generation
+        - Debugging 
+        - Testing the API endpoints
+        - Ensuring all edge cases are met
+        - Ensuring there is no race conditions and double booking
+        - Ensure Code documentation and type hints meets the global standard
+    
+    - Deployment & CI/CD
+        - Configuring the database for local and production environment
+        - Assisted in setting up CI/CD in CircleCI
+        - Assisted in setting up Railway hosting
+
+2. Give one example where an AI suggestion improved your work. What did you prompt it with?
+    ```
+        After hosting the API, I realised that there was nothing showing for the home url path of my endpoint. I come up with a prompt to suggest creating a home page for our API.
+        Here below is the prompt.
+         "I have successfully deployed and accessed it, 
+          the home url path has nothing to show, what can we include there? I was suggesting maybe the available apis, admin, swagger, schema, and redoc.
+          Can you work on the background coloring, include animations and ensure that every url fits within its box.
+          can you make it slightly darker,
+          Can you redesign the whole of it so that on one end, maybe right side, we can scroll through the redoc, the payload and expected response.
+          when the links are clicked on the home page, they should open in another tab
+          The name CareConnect Clinic Booking API should be centre aligned
+          On the swagger, can we add a section showing how to run and access the apis"
+    ```
+
+3. Give one example where AI output was wrong or incomplete and how you caught it.
+
+        During code generation for bookings/models.py, the AI used foregin key on the user's      instead of decoupling them. I run the code with the mistake out of curiousity of what would go wrong. I used the error log I got to debug the issue.
+
+4. Name two decisions you made without AI. Why did you trust your own judgment there?\
+
+    - The framework to use - Since this was an MVP, I needed a framework that would enable data consistency and since I new Django was the best choice becouse of inbuild ORM
+    - Using Railway to host the API - I needed a hosting platform that would enable persistence after deployment without disruption of the provided compute resources.
