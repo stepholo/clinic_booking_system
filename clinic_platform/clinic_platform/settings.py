@@ -203,10 +203,10 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': int(getenv('API_PAGE_SIZE', 20)),
+    'PAGE_SIZE': int(getenv('API_PAGE_SIZE', '20')),
 }
 
-CACHE_TTL_SECONDS = int(getenv('CACHE_TTL_SECONDS', 60))
+CACHE_TTL_SECONDS = int(getenv('CACHE_TTL_SECONDS', '60'))
 REDIS_URL = (getenv('REDIS_URL', '') or '').strip()
 USE_REDIS_CACHE = getbool('USE_REDIS_CACHE', bool(REDIS_URL))
 REDIS_PY_AVAILABLE = importlib.util.find_spec('redis') is not None
@@ -231,8 +231,8 @@ else:
 SIMPLE_JWT = {
     'USER_ID_FIELD': 'user_id',
     'USER_ID_CLAIM': 'user_id',
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(getenv('JWT_ACCESS_EXPIRATION_DAYS'))),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(getenv('JWT_REFRESH_EXPIRATION_DAYS'))),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=int(getenv('JWT_ACCESS_EXPIRATION_DAYS', '1'))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(getenv('JWT_REFRESH_EXPIRATION_DAYS', '7'))),
 }
 
 SPECTACULAR_SETTINGS = {
