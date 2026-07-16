@@ -70,9 +70,9 @@ jobs:
       - run:
           name: Install Railway CLI
           command: |
-            curl -fsSL https://railway.app/install.sh | sh
+            curl -fsSL https://railway.app/install.sh | bash
             echo 'export PATH="$HOME/.railway/bin:$PATH"' >> "$BASH_ENV"
-            source "$BASH_ENV"
+            . "$BASH_ENV"
             railway --version
       - run:
           name: Deploy app service to Railway
