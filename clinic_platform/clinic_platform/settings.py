@@ -80,7 +80,14 @@ def _resolved_db_config(prefix: str, fallback_url_env: str = 'DATABASE_URL', fal
         'PORT': getenv(f'{prefix}_PORT'),
     }
 
-    url_cfg = _db_from_url(
+    public_url_cfg = _db_from_url(
+        getenv(f'{prefix}_DATABASE_PUBLIC_URL')
+        or getenv(f'{prefix}_PUBLIC_URL')
+        or getenv('DATABASE_PUBLIC_URL')
+        or getenv('DATABASE_PULIC_URL')
+    )
+
+    url_cfg = public_url_cfg or _db_from_url(
         getenv(f'{prefix}_DATABASE_URL')
         or getenv(f'{prefix}_URL')
         or getenv(fallback_url_env)

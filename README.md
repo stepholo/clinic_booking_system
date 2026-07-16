@@ -1,4 +1,4 @@
-# Clinic Booking System
+# CareConnect Clinic Booking System
 
 Clinic Booking System is a Django + Django REST Framework backend for managing clinic users, doctors, patients, schedules, and appointments.
 
@@ -168,6 +168,28 @@ Required CircleCI environment variables for deploy:
 - Ensure the app service has database variables available (`DATABASE_URL` or equivalent PG/USER_DB/BOOKING_DB vars).
 - If `createsuperuser` fails with a local socket error, it usually means DB env vars are missing in the running service shell.
 - Run migrations on both database aliases after each schema-affecting deploy.
+
+### Railway SSH (Current Service)
+
+Use this command to open a shell in the deployed app service:
+
+```bash
+railway ssh --project=185603ce-1b63-4597-86d3-9cd065a54d2b --environment=bd4ca2c9-846f-4b8c-a27f-ecb09c2f1360 --service=aa817214-52c8-4a94-8281-c1134a6b9d2f
+```
+
+After connecting, verify database variables are present:
+
+```bash
+env | grep -E 'DATABASE_URL|PGHOST|PGPORT|PGDATABASE|PGUSER|PGPASSWORD|USER_DB_|BOOKING_DB_'
+```
+
+Then run:
+
+```bash
+python3 manage.py migrate --database=user_db
+python3 manage.py migrate --database=booking_db
+python3 manage.py createsuperuser --database=user_db
+```
 
 ## Project Structure (Top-Level)
 
