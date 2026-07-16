@@ -111,6 +111,9 @@ DATABASES = {
         'PASSWORD': getenv('USER_DB_PASSWORD'),
         'HOST': getenv('USER_DB_HOST'),
         'PORT': getenv('USER_DB_PORT'),
+        'TEST': {
+            'MIRROR': 'user_db',
+        },
     },
     'user_db': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -119,6 +122,9 @@ DATABASES = {
         'PASSWORD': getenv('USER_DB_PASSWORD'),
         'HOST': getenv('USER_DB_HOST'),
         'PORT': getenv('USER_DB_PORT'),
+        'TEST': {
+            'DEPENDENCIES': [],
+        },
     },
     'booking_db': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -127,6 +133,9 @@ DATABASES = {
         'PASSWORD': getenv('BOOKING_DB_PASSWORD'),
         'HOST': getenv('BOOKING_DB_HOST'),
         'PORT': getenv('BOOKING_DB_PORT'),
+        'TEST': {
+            'DEPENDENCIES': ['user_db'],
+        },
     },
 }
 
