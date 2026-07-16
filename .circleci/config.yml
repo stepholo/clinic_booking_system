@@ -1,0 +1,95 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/python:3.12
+      - image: cimg/postgres:15.8
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clinic_ci
+    environment:
+      DEBUG: "False"
+      USER_DB_NAME: clinic_ci
+      USER_DB_USER: postgres
+      USER_DB_PASSWORD: postgres
+      USER_DB_HOST: localhost
+      USER_DB_PORT: "5432"
+      BOOKING_DB_NAME: clinic_ci
+      BOOKING_DB_USER: postgres
+      BOOKING_DB_PASSWORD: postgres
+      BOOKING_DB_HOST: localhost
+      BOOKING_DB_PORT: "5432"
+      JWT_ACCESS_EXPIRATION_DAYS: "1"
+      JWT_REFRESH_EXPIRATION_DAYS: "7"
+      CACHE_TTL_SECONDS: "60"
+      API_PAGE_SIZE: "20"
+      USE_REDIS_CACHE: "False"
+      REDIS_URL: ""
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            cd clinic_platform
+            python -m pip install --upgrade pip
+            pip install -r requirements-dev.txt
+      - run:
+          name: Wait for Postgres
+          command: |
+            for i in $(seq 1 30); do
+              nc -z 127.0.0.1 5432 && echo "Postgres is up" && exit 0
+              echo "Waiting for Postgres..."
+              sleep 2
+            done
+            echo "Postgres did not become ready in time"
+            exit 1
+      - run:
+          name: Run migrations
+          command: |
+            cd clinic_platform
+            python manage.py migrate --database user_db --noinput
+            python manage.py migrate --database booking_db --noinput
+      - run:
+          name: Run pytest suites
+          command: |
+            cd "$CIRCLE_WORKING_DIRECTORY"
+            pytest clinic_platform/tests -q
+
+  deploy:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - run:
+          name: Install Railway CLI
+          command: |
+            curl -fsSL https://railway.app/install.sh | sh
+            echo 'export PATH="$HOME/.railway/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+            railway --version
+      - run:
+          name: Deploy app service to Railway
+          command: |
+            if [ -z "$RAILWAY_TOKEN" ] || [ -z "$RAILWAY_APP_PROJECT_ID" ] || [ -z "$RAILWAY_APP_SERVICE_ID" ]; then
+              echo "Missing one or more required env vars: RAILWAY_TOKEN, RAILWAY_APP_PROJECT_ID, RAILWAY_APP_SERVICE_ID"
+              exit 1
+            fi
+
+            railway login --token "$RAILWAY_TOKEN"
+            railway up \
+              --project "$RAILWAY_APP_PROJECT_ID" \
+              --service "$RAILWAY_APP_SERVICE_ID" \
+              --detach
+
+workflows:
+  ci:
+    jobs:
+      - test
+      - deploy:
+          requires:
+            - test
+          filters:
+            branches:
+              only: main
