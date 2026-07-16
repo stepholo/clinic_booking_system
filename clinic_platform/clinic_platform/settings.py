@@ -43,7 +43,11 @@ SECRET_KEY = 'django-insecure-vw6c0!zy1jhtdgjk@x-qlrrlyak@3uuip6xcu23)axytyx)q_u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = getbool('DEBUG', False)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,.railway.app').split(',')
+    if host.strip()
+]
 
 AUTH_USER_MODEL = 'users.User'
 
