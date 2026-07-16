@@ -139,6 +139,18 @@ DATABASES = {
     },
 }
 
+# In some CI setups both aliases intentionally point to the same physical DB.
+# Django test database ordering treats alias dependencies as circular in that case,
+# so only enforce booking_db -> user_db dependency when databases are distinct.
+_same_test_db_signature = (
+    DATABASES['user_db']['ENGINE'] == DATABASES['booking_db']['ENGINE']
+    and DATABASES['user_db']['HOST'] == DATABASES['booking_db']['HOST']
+    and str(DATABASES['user_db']['PORT']) == str(DATABASES['booking_db']['PORT'])
+    and DATABASES['user_db']['NAME'] == DATABASES['booking_db']['NAME']
+)
+if _same_test_db_signature:
+    DATABASES['booking_db']['TEST']['DEPENDENCIES'] = []
+
 # Register the database routers
 DATABASE_ROUTERS = ['clinic_platform.router.MicroserviceDatabaseRouter']
 
