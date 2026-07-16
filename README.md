@@ -227,13 +227,15 @@ Clinic Booking System/
 
 2. Give one example where an AI suggestion improved your work. What did you prompt it with?
     ```
-        After hosting the API, I realised that there was nothing showing for the home url path of my endpoint. I come up with a prompt to suggest creating a home page for our API.
+        After hosting the API, I realised that there was nothing showing for the home url path of my endpoint. 
+        I come up with a prompt to suggest creating a home page for our API.
         Here below is the prompt.
          "I have successfully deployed and accessed it, 
-          the home url path has nothing to show, what can we include there? I was suggesting maybe the available apis, admin, swagger, schema, and redoc.
+          the home url path has nothing to show, what can we include there? I was suggesting maybe the available API endpoints.
           Can you work on the background coloring, include animations and ensure that every url fits within its box.
           can you make it slightly darker,
-          Can you redesign the whole of it so that on one end, maybe right side, we can scroll through the redoc, the payload and expected response.
+          Can you redesign the whole of it so that on one end, maybe right side, 
+          we can scroll through the redoc, the payload and expected response.
           when the links are clicked on the home page, they should open in another tab
           The name CareConnect Clinic Booking API should be centre aligned
           On the swagger, can we add a section showing how to run and access the apis"
