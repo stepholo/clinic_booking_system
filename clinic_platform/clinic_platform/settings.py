@@ -36,6 +36,15 @@ def getbool(key, default=False):
     return str(val).lower() in ('1', 'true', 'yes')
 
 
+def _first_env(*keys: str) -> str | None:
+    """Return the first non-empty environment value among provided keys."""
+    for key in keys:
+        value = os.environ.get(key)
+        if value is not None and str(value).strip() != '':
+            return value
+    return None
+
+
 def _db_from_url(url: str | None) -> dict:
     """Parse a Postgres DATABASE_URL into Django DATABASES fields."""
     if not url:
@@ -77,10 +86,19 @@ def _resolved_db_config(prefix: str, fallback_url_env: str = 'DATABASE_URL', fal
         or getenv(fallback_url_env)
     )
 
+    # Railway/managed Postgres environments may expose credentials as PG* or POSTGRES_*.
+    generic_pg = {
+        'NAME': _first_env('PGDATABASE', 'POSTGRES_DB'),
+        'USER': _first_env('PGUSER', 'POSTGRES_USER'),
+        'PASSWORD': _first_env('PGPASSWORD', 'POSTGRES_PASSWORD'),
+        'HOST': _first_env('PGHOST', 'POSTGRES_HOST'),
+        'PORT': _first_env('PGPORT', 'POSTGRES_PORT'),
+    }
+
     merged = {'ENGINE': 'django.db.backends.postgresql'}
     base = fallback or {}
     for key in ('NAME', 'USER', 'PASSWORD', 'HOST', 'PORT'):
-        merged[key] = explicit.get(key) or url_cfg.get(key) or base.get(key)
+        merged[key] = explicit.get(key) or url_cfg.get(key) or generic_pg.get(key) or base.get(key)
 
     options = url_cfg.get('OPTIONS') or base.get('OPTIONS')
     if options:
