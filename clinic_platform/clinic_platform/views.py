@@ -16,15 +16,15 @@ def home(request: HttpRequest):
         HttpResponse | JsonResponse: HTML page by default, JSON when requested.
     """
     links = {
-        'admin': request.build_absolute_uri('/admin/'),
-        'swagger': request.build_absolute_uri('/api/docs/'),
-        'schema': request.build_absolute_uri('/api/schema/'),
-        'redoc': request.build_absolute_uri('/api/redoc/'),
-        'users_api': request.build_absolute_uri('/api/users/'),
-        'doctors_api': request.build_absolute_uri('/api/doctors/'),
-        'patients_api': request.build_absolute_uri('/api/patients/'),
-        'schedules_api': request.build_absolute_uri('/api/schedules/'),
-        'appointments_api': request.build_absolute_uri('/api/appointments/'),
+        'admin': '/admin/',
+        'swagger': '/api/docs/',
+        'schema': '/api/schema/',
+        'redoc': '/api/redoc/',
+        'users_api': '/api/users/',
+        'doctors_api': '/api/doctors/',
+        'patients_api': '/api/patients/',
+        'schedules_api': '/api/schedules/',
+        'appointments_api': '/api/appointments/',
     }
 
     usage = {

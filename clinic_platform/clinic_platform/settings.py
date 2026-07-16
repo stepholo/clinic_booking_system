@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 import importlib.util
+from urllib.parse import parse_qs, unquote, urlparse
 from dotenv import load_dotenv
 from datetime import timedelta
 
@@ -33,6 +34,59 @@ def getbool(key, default=False):
     if val is None:
         return default
     return str(val).lower() in ('1', 'true', 'yes')
+
+
+def _db_from_url(url: str | None) -> dict:
+    """Parse a Postgres DATABASE_URL into Django DATABASES fields."""
+    if not url:
+        return {}
+
+    parsed = urlparse(url)
+    if parsed.scheme not in ('postgres', 'postgresql', 'psql'):
+        return {}
+
+    cfg = {
+        'NAME': unquote((parsed.path or '').lstrip('/')) or None,
+        'USER': unquote(parsed.username) if parsed.username else None,
+        'PASSWORD': unquote(parsed.password) if parsed.password else None,
+        'HOST': parsed.hostname,
+        'PORT': str(parsed.port) if parsed.port else None,
+    }
+
+    query = parse_qs(parsed.query)
+    sslmode = (query.get('sslmode') or [None])[-1]
+    if sslmode:
+        cfg['OPTIONS'] = {'sslmode': sslmode}
+
+    return cfg
+
+
+def _resolved_db_config(prefix: str, fallback_url_env: str = 'DATABASE_URL', fallback: dict | None = None) -> dict:
+    """Resolve DB settings from explicit vars, then URL vars, then fallback config."""
+    explicit = {
+        'NAME': getenv(f'{prefix}_NAME'),
+        'USER': getenv(f'{prefix}_USER'),
+        'PASSWORD': getenv(f'{prefix}_PASSWORD'),
+        'HOST': getenv(f'{prefix}_HOST'),
+        'PORT': getenv(f'{prefix}_PORT'),
+    }
+
+    url_cfg = _db_from_url(
+        getenv(f'{prefix}_DATABASE_URL')
+        or getenv(f'{prefix}_URL')
+        or getenv(fallback_url_env)
+    )
+
+    merged = {'ENGINE': 'django.db.backends.postgresql'}
+    base = fallback or {}
+    for key in ('NAME', 'USER', 'PASSWORD', 'HOST', 'PORT'):
+        merged[key] = explicit.get(key) or url_cfg.get(key) or base.get(key)
+
+    options = url_cfg.get('OPTIONS') or base.get('OPTIONS')
+    if options:
+        merged['OPTIONS'] = options
+
+    return merged
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
@@ -111,34 +165,23 @@ WSGI_APPLICATION = 'clinic_platform.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': getenv('USER_DB_NAME'),
-        'USER': getenv('USER_DB_USER'),
-        'PASSWORD': getenv('USER_DB_PASSWORD'),
-        'HOST': getenv('USER_DB_HOST'),
-        'PORT': getenv('USER_DB_PORT'),
+        **_resolved_db_config('USER_DB', fallback_url_env='DATABASE_URL'),
         'TEST': {
             'MIRROR': 'user_db',
         },
     },
     'user_db': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': getenv('USER_DB_NAME'),
-        'USER': getenv('USER_DB_USER'),
-        'PASSWORD': getenv('USER_DB_PASSWORD'),
-        'HOST': getenv('USER_DB_HOST'),
-        'PORT': getenv('USER_DB_PORT'),
+        **_resolved_db_config('USER_DB', fallback_url_env='DATABASE_URL'),
         'TEST': {
             'DEPENDENCIES': [],
         },
     },
     'booking_db': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': getenv('BOOKING_DB_NAME'),
-        'USER': getenv('BOOKING_DB_USER'),
-        'PASSWORD': getenv('BOOKING_DB_PASSWORD'),
-        'HOST': getenv('BOOKING_DB_HOST'),
-        'PORT': getenv('BOOKING_DB_PORT'),
+        **_resolved_db_config(
+            'BOOKING_DB',
+            fallback_url_env='BOOKING_DATABASE_URL',
+            fallback=_resolved_db_config('USER_DB', fallback_url_env='DATABASE_URL'),
+        ),
         'TEST': {
             'DEPENDENCIES': ['user_db'],
         },
@@ -156,6 +199,9 @@ _same_test_db_signature = (
 )
 if _same_test_db_signature:
     DATABASES['booking_db']['TEST']['DEPENDENCIES'] = []
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
 
 # Register the database routers
 DATABASE_ROUTERS = ['clinic_platform.router.MicroserviceDatabaseRouter']
