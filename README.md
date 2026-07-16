@@ -241,7 +241,7 @@ Clinic Booking System/
 
 3. Give one example where AI output was wrong or incomplete and how you caught it.
 
-        During code generation for bookings/models.py, the AI used foregin key on the user's      instead of decoupling them. I run the code with the mistake out of curiousity of what would go wrong. I used the error log I got to debug the issue.
+    - During code generation for bookings/models.py, the AI used foregin key on the user's      instead of decoupling them. I run the code with the mistake out of curiousity of what would go wrong. I used the error log I got to debug the issue.
 
 4. Name two decisions you made without AI. Why did you trust your own judgment there?\
 
